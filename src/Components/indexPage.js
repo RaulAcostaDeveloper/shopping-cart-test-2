@@ -4,9 +4,8 @@ import { useContext, useEffect } from "react"
 
 export const IndexPage = () => {
     const { productsState, isLoading, isError } = useContext(ProductsContext);
-    useEffect(()=>{
-        console.log('productsState ', productsState);
-    },[productsState]);
+    // Podría usar un array normalizado de productos para mapear sólo el más relevante pero conservando la información de cuál se está enviando
+    
     return (
         <div>
             Index page

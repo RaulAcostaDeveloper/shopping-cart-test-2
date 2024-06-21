@@ -1,6 +1,7 @@
 'use client'
 import { createContext, useEffect, useState } from "react"
 import { getData, getIMGURL } from "./ApiCalls/GetData";
+import { normalizadorDeArrayDeProductos } from "./Utilities/normalizadorDeProductos";
 
 export const ProductsContext = createContext();
 export const ProductsController = ({ children }) => {
@@ -19,23 +20,36 @@ export const ProductsController = ({ children }) => {
             const buttonDownShirtUrl = await getIMGURL('http://localhost:3000/images/button-down-shirt.jpg');
             const hoodieUrl = await getIMGURL('http://localhost:3000/images/hoodie.jpg');
             // NOTA: Los precios que devuelve el servicio no respetan la lógica de (s > m > l)
-            console.log('productsResponse ', productsResponse);
-            console.log('pricesResponse ', pricesResponse);
-            console.log('stockResponse ', stockResponse);
-            console.log('tShirtUrl ', tShirtUrl);
-            console.log('poloShirtUrl ', poloShirtUrl);
-            console.log('buttonDownShirtUrl ', buttonDownShirtUrl);
-            console.log('hoodieUrl ', hoodieUrl);
             if (productsResponse && pricesResponse && stockResponse && tShirtUrl && poloShirtUrl && buttonDownShirtUrl && hoodieUrl) {
-                setIsError(false);
+
+                // Normalizar el arreglo de productos para poder usarlo en base a los requerimientos y los resultados del servicio
+                const normalizado = normalizadorDeArrayDeProductos(productsResponse, pricesResponse, stockResponse);
+
+                // A cada CODE le corresponde una imágen, por eso hago la asignación después de la normalización
+                const modelToUrlMap = {
+                    't-shirt': tShirtUrl,
+                    'polo shirt': poloShirtUrl,
+                    'button-down shirt': buttonDownShirtUrl,
+                    'hoodie': hoodieUrl
+                };
                 
+                // Añadir urlImg a cada objeto del arreglo finalProducts
+                normalizado.forEach(product => {
+                    product.urlImg = modelToUrlMap[product.model] || '';
+                });
+                setProductsState(normalizado);
+                setIsError(false);
             } else {
                 setIsError(true);
             }
             setIsLoading(false);
         })();
-        
     }, []);
+
+    useEffect(()=>{
+        // Ocupo ir viendo que se actualice bien el estado de los productos
+        console.log('productsState ', productsState);
+    },[productsState]);
     return (
         <ProductsContext.Provider value={{ productsState, isLoading, isError }}>
             {children}

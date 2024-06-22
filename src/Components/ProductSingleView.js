@@ -61,7 +61,7 @@ export const ProductSingleView = ({ code }) => {
     )
 }
 
-const RenderBySizeSelected = ({ productData, sizeSelected, sizeData, setSizeData }) => {
+const RenderBySizeSelected = ({ productData, sizeData, setSizeData }) => {
     return (
         <div>
             $ {sizeData.price}
@@ -98,22 +98,22 @@ const Contador = ({ productData, sizeData, setSizeData }) => {
             {
                 // con que haya alguna
                 (productData.stocks.lStock || productData.stocks.mStock || productData.stocks.sStock) ?
-                <>
-                    <div>
-                        <span>Size: </span>
-                        <SelectorDeSize productData={productData} sizeData={sizeData} setSizeData={setSizeData} />
-                    </div>
+                    <>
+                        <div>
+                            <span>Size: </span>
+                            <SelectorDeSize productData={productData} sizeData={sizeData} setSizeData={setSizeData} />
+                        </div>
 
-                    <button onClick={handleRestar}>-</button>
-                    {cantidad}
-                    <button onClick={handleSumar}>+</button>
-                    <button onClick={handleAddToCart}>Add to cart</button>
-                </>
-                : 
-                // No quiero que arroje 0 al agotarse existencias
-                <p>
-                    Ya no hay en existencia
-                </p>
+                        <button onClick={handleRestar}>-</button>
+                        {cantidad}
+                        <button onClick={handleSumar}>+</button>
+                        <button onClick={handleAddToCart}>Add to cart</button>
+                    </>
+                    :
+                    // No quiero que arroje 0 al agotarse existencias
+                    <p>
+                        Ya no hay en existencia
+                    </p>
             }
         </div>
     )

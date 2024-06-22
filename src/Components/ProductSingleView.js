@@ -6,58 +6,51 @@ export const ProductSingleView = ({ code }) => {
     const { productsState, isLoading } = useContext(ProductsContext);
     const [productData, setProductData] = useState();
     const [sizeData, setSizeData] = useState({});
-    const [sizeSelected, setSizeSelected] = useState();
 
     // Teniendo el código puedo buscar el objeto
     useEffect(() => {
         const indexItem = productsState.findIndex(item => item.code === code);
         console.log('productsState se actualizó', productsState[indexItem]);
-        setProductData(productsState[indexItem]);
-    }, [productsState]);
+        const newProductData = productsState[indexItem];
 
-    useEffect(() => {
-        // También inicializar el sizeSelected dependiendo del stock disponible
-        // Se supone que también cambió productState
-        console.log('productData se actualizó ', productData);
-        // Ojo, no está entrando
-        if (productData?.stocks.sStock) {
+        // Actualiza sizeData
+        if (newProductData?.stocks.sStock) {
             setSizeData({
                 size: 'S',
-                stock: productData.stocks.sStock,
-                price:productData.prices.sPrice,
+                stock: newProductData.stocks.sStock,
+                price: newProductData.prices.sPrice,
             });
-            setSizeSelected('S');
-        } else if (productData?.stocks.mStock) {
+        } else if (newProductData?.stocks.mStock) {
             setSizeData({
                 size: 'M',
-                stock: productData.stocks.mStock,
-                price:productData.prices.mPrice,
+                stock: newProductData.stocks.mStock,
+                price: newProductData.prices.mPrice,
             });
-            setSizeSelected('M');
-        } else if (productData?.stocks.lStock) {
+        } else if (newProductData?.stocks.lStock) {
             setSizeData({
                 size: 'L',
-                stock: productData.stocks.lStock,
-                price:productData.prices.lPrice,
+                stock: newProductData.stocks.lStock,
+                price: newProductData.prices.lPrice,
             });
-            setSizeSelected('L');
         } else {
             console.log('Error, no se encontró la disponibilidad del producto');
         }
-    }, [productData]);
+        // Actualiza product data
+        setProductData(newProductData);
+    }, [productsState]);
 
     return (
         <div>
             {isLoading ? <div>Is loading...</div>
                 :
                 <>
-                    {sizeSelected ?
+                    {productData && sizeData ?
                         <>
                             <img className="w-12" src={productData.urlImg} alt={'Image from ' + productData.model} />
                             <span>{productData.model}_</span>
-                            <RenderBySizeSelected productData={productData} sizeSelected={sizeSelected}
-                            sizeData={sizeData}
-                            setSizeSelected={setSizeSelected} />
+                            <RenderBySizeSelected productData={productData}
+                                sizeData={sizeData}
+                                setSizeData={setSizeData} />
                         </>
                         :
                         <div>No se encontró disponibilidad del producto</div>
@@ -68,17 +61,17 @@ export const ProductSingleView = ({ code }) => {
     )
 }
 
-const RenderBySizeSelected = ({ productData, sizeSelected, sizeData, setSizeSelected }) => {
+const RenderBySizeSelected = ({ productData, sizeSelected, sizeData, setSizeData }) => {
     return (
         <div>
             $ {sizeData.price}
-            <Contador productData={productData} sizeData={sizeData} />
+            <Contador productData={productData} sizeData={sizeData} setSizeData={setSizeData} />
         </div>
     )
 }
 
 // Estos son micro components
-const Contador = ({ productData, sizeData }) => {
+const Contador = ({ productData, sizeData, setSizeData }) => {
     const { modificarCarrito } = useContext(ProductsContext);
     const [cantidad, setCantidad] = useState(1); // queremos que el usuario quiera comprar un producto, por eso inicio en 1.
     const handleRestar = () => {
@@ -102,10 +95,65 @@ const Contador = ({ productData, sizeData }) => {
     }
     return (
         <div>
-            <button onClick={handleRestar}>-</button>
-            {cantidad}
-            <button onClick={handleSumar}>+</button>
-            <button onClick={handleAddToCart}>Add to cart</button>
+            {
+                // con que haya alguna
+                (productData.stocks.lStock || productData.stocks.mStock || productData.stocks.sStock) ?
+                <>
+                    <div>
+                        <span>Size: </span>
+                        <SelectorDeSize productData={productData} sizeData={sizeData} setSizeData={setSizeData} />
+                    </div>
+
+                    <button onClick={handleRestar}>-</button>
+                    {cantidad}
+                    <button onClick={handleSumar}>+</button>
+                    <button onClick={handleAddToCart}>Add to cart</button>
+                </>
+                : 
+                // No quiero que arroje 0 al agotarse existencias
+                <p>
+                    Ya no hay en existencia
+                </p>
+            }
         </div>
+    )
+}
+const SelectorDeSize = ({ productData, sizeData, setSizeData }) => { // no considero que sea necesario un global state para setSizeSelected
+    const handleSizeChange = (size) => {
+        // Mejor este método lo puedo pasar hasta arriba
+        // Actualiza sizeData
+        switch (size) {
+            case 'S':
+                setSizeData({
+                    size: 'S',
+                    stock: productData.stocks.sStock,
+                    price: productData.prices.sPrice,
+                });
+                break;
+            case 'M':
+                setSizeData({
+                    size: 'M',
+                    stock: productData.stocks.mStock,
+                    price: productData.prices.mPrice,
+                });
+                break;
+            case 'L':
+                setSizeData({
+                    size: 'L',
+                    stock: productData.stocks.lStock,
+                    price: productData.prices.lPrice,
+                });
+                break;
+            default:
+                break;
+        }
+    }
+    return (
+        <>
+            {productData.stocks.sStock > 0 && <button className={`${sizeData.size === 'S' && 'border-2 border-solid'}`} onClick={() => handleSizeChange('S')}>S</button>}
+            {productData.stocks.mStock > 0 && <button className={`${sizeData.size === 'M' && 'border-2 border-solid'}`} onClick={() => handleSizeChange('M')}>M</button>}
+            {productData.stocks.lStock > 0 && <button className={`${sizeData.size === 'L' && 'border-2 border-solid'}`} onClick={() => handleSizeChange('L')}>L</button>}
+
+        </>
     )
 }

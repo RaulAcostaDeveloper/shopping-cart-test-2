@@ -64,6 +64,20 @@ export const ProductsController = ({ children }) => {
         console.log('cartState update ', cartState);
     },[cartState]);
 
+    const inicializarCarrito = (array) => {
+        // Ya que tenemos los productos inicializados, inicializaremos a 0 todos los stock, porque este es es carrito
+        // OJO puede que después regrese para ponerle el precio en caso que lo requiera
+        const newArray = array.map(item => ({
+        code: item.code,
+        stocks: {
+            sStock: 0,
+            mStock: 0,
+            lStock: 0
+        }
+    }));
+        setCartState(newArray);
+    }
+
     const modificarCarrito = (code, size, quantity, operation) => {
 
         // Con el objetivo de poder restar stock al añadir al carrito
@@ -105,19 +119,6 @@ export const ProductsController = ({ children }) => {
         setCartState(newCart);
     }
 
-    const inicializarCarrito = (array) => {
-        // Ya que tenemos los productos inicializados, inicializaremos a 0 todos los stock, porque este es es carrito
-        // OJO puede que después regrese para ponerle el precio en caso que lo requiera
-        const newArray = array.map(item => ({
-        code: item.code,
-        stocks: {
-            sStock: 0,
-            mStock: 0,
-            lStock: 0
-        }
-    }));
-        setCartState(newArray);
-    }
     return (
         <ProductsContext.Provider value={{ productsState, cartState, isLoading, isError, modificarCarrito}}>
             {children}

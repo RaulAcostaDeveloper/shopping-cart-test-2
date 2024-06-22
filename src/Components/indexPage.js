@@ -1,5 +1,6 @@
 'use client'
 import { ProductsContext } from "@/productsController";
+import Link from "next/link";
 import { useContext, useState } from "react"
 
 export const IndexPage = () => {
@@ -13,8 +14,12 @@ export const IndexPage = () => {
                     {/* Cubrir el caso en el que no haya stock de ningun size */}
                     {(product.stocks.lStock || product.stocks.mStock || product.stocks.sStock) &&
                         <div>
-                            <img className="w-12" src={product.urlImg} alt={'img of ' + product.model} />
-                            <h3>{product.model}</h3>
+                            {/* Podría añadir un botón para ir a su single view pero no se si quieren que respete al 100% el diseño */}
+                            {/* Por esa razón pongo el click en la imágen y el título */}
+                            <Link href={'/' + product.code}>
+                                <img className="w-12" src={product.urlImg} alt={'img of ' + product.model} />
+                                <h3>{product.model}</h3>
+                            </Link>
                             {/* Aquí decide cuál se va a renderizar */}
                             {/* Por disponibilidad priorizando por tamaño !Importante información para entender todo el comportamiento*/}
                             <ProductInfoSelector product={product} />

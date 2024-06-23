@@ -10,7 +10,6 @@ export const ProductSingleView = ({ code }) => {
     // Teniendo el código puedo buscar el objeto
     useEffect(() => {
         const indexItem = productsState.findIndex(item => item.code === code);
-        console.log('productsState se actualizó', productsState[indexItem]);
         const newProductData = productsState[indexItem];
 
         // Actualiza sizeData

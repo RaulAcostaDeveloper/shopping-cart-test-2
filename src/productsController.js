@@ -3,6 +3,19 @@ import { createContext, useEffect, useState } from "react"
 import { getData, getIMGURL } from "./ApiCalls/GetData";
 import { normalizadorDeArrayDeProductos } from "./Utilities/normalizadorDeProductos";
 import { normalizadorDelCarrito } from "./Utilities/normalizadorDelCarrito";
+import Link from "next/link";
+import { Header } from "./Components/header";
+
+// Tuve que poner este parque porque necesito los valores iniciales pero algo está modificando directamente el estado de initialProductData
+const deepFreeze = (object) => {
+    Object.freeze(object);
+    Object.keys(object).forEach((key) => {
+        if (typeof object[key] === 'object' && !Object.isFrozen(object[key])) {
+            deepFreeze(object[key]);
+        }
+    });
+    return object;
+};
 
 // High order component
 export const ProductsContext = createContext();
@@ -11,8 +24,22 @@ export const ProductsController = ({ children }) => {
     // Se puede controlar el carrito desde aquí y no es necesario crear un controller separado
     const [cartState, setCartState] = useState([]);
     const [productsState, setProductsState] = useState([]);
+
+    // Por la necesidad de traer de nuevo el valor del stock inicial al borrar cualquiér item del carrito
+    const [initialProductData, setInitialProductData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isError, setIsError] = useState(false);
+
+    // Voy a dejar estos logs para seguir controlando
+    useEffect(()=>{
+        console.log('cartState ', cartState);
+    },[cartState]);
+    useEffect(()=>{
+        console.log('productsState ', productsState);
+    },[productsState]);
+    useEffect(()=>{
+        console.log('initialProductData ', initialProductData);
+    },[initialProductData]);
 
     useEffect(() => {
         // Normalizar el arreglo
@@ -30,7 +57,7 @@ export const ProductsController = ({ children }) => {
             if (productsResponse && pricesResponse && stockResponse && tShirtUrl && poloShirtUrl && buttonDownShirtUrl && hoodieUrl) {
 
                 // Nueva inicialización del carrito
-                inicializarCarrito(productsResponse, pricesResponse);
+                inicializarCarrito(productsResponse, pricesResponse, stockResponse);
 
                 // Normalizar el arreglo de productos para poder usarlo en base a los requerimientos y los resultados del servicio
                 const normalizado = normalizadorDeArrayDeProductos(productsResponse, pricesResponse, stockResponse);
@@ -47,7 +74,7 @@ export const ProductsController = ({ children }) => {
                 normalizado.forEach(product => {
                     product.urlImg = modelToUrlMap[product.model] || '';
                 });
-
+                setInitialProductData(normalizado);
                 setProductsState(normalizado);
                 setIsError(false);
             } else {
@@ -57,23 +84,16 @@ export const ProductsController = ({ children }) => {
         })();
     }, []);
 
-    // Ocupo ir viendo que se actualice bien el estado del carrito y los productos
-    useEffect(() => {
-        console.log('productsState update ', productsState);
-    }, [productsState]);
+    const inicializarCarrito = (productsResponse, pricesResponse, stockResponse) => {
 
-    useEffect(() => {
-        console.log('cartState update ', cartState);
-    }, [cartState]);
-
-    const inicializarCarrito = (productsResponse, pricesResponse) => {
         // Ya que tenemos los productos inicializados, inicializaremos a 0 todos los stock, porque este es es carrito
         // OJO puede que después regrese para ponerle el precio en caso que lo requiera
-        const normalizado = normalizadorDelCarrito(productsResponse, pricesResponse);
+        const normalizado = normalizadorDelCarrito(productsResponse, pricesResponse, stockResponse);
         setCartState(normalizado);
     }
 
     const modificarArrayDeProductos = (code, size, quantity, operation) => {
+
         // Con el objetivo de poder restar stock al añadir al carrito
         // Y también poder "regresar" stock al quitar del carrito
         const indexByCode = productsState.findIndex(item => item.code === code);
@@ -94,14 +114,23 @@ export const ProductsController = ({ children }) => {
         if (stockTypes[size]) {
             const stockType = stockTypes[size];
 
+            // Por alguna razón, el valor de initialProductData es modificado durante esta ejecución, pero puedo hacer que su copia initialData se queda intacta
+            const initialData = deepFreeze(JSON.parse(JSON.stringify(initialProductData)));
+
             // al sumar al carrito, resta a los productos
             if (operation === "suma") {
                 newProductState[indexByCode].stocks[stockType] -= quantity;
-            } else if (operation === "resta") {
-                newProductState[indexByCode].stocks[stockType] += quantity;
+            } else if (operation === "update") {
+                newProductState[indexByCode].stocks[stockType] = initialData[indexByCode].stocks[stockType] - quantity;
+            } else if (operation === "elimina") {
+                // Retornar a su valor inicial
+                newProductState[indexByCode].stocks[stockType] = initialData[indexByCode].stocks[stockType];
             }
-        }
 
+            // Logré que la copia del estado se quede intacta pero el estado se modifica por algúna razón
+            // Así que regreso su valor. No debería porqué pasar esto pero si paso.
+            setInitialProductData(initialData);
+        }
         // Actualizar el valor de productsState
         setProductsState(newProductState);
     }
@@ -119,14 +148,17 @@ export const ProductsController = ({ children }) => {
         // al sumar al carrito, resta a los productos
         if (operation === "suma") {
             newCart[index].stock += quantity;
-        } else if (operation === "resta") {
-            newCart[index].stock -= quantity;
+        } else if (operation === "update") {
+            newCart[index].stock = quantity;
+        } else if (operation === "elimina") { // Al darle a la X en el botón del elemento del carrito
+            newCart[index].stock = 0;
         }
         setCartState(newCart);
     }
 
     return (
-        <ProductsContext.Provider value={{ productsState, cartState, isLoading, isError, modificarCarrito }}>
+        <ProductsContext.Provider value={{ productsState, initialProductData, cartState, isLoading, isError, modificarCarrito }}>
+            <Header />
             {children}
         </ProductsContext.Provider>
     )

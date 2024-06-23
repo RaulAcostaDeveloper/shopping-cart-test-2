@@ -1,5 +1,4 @@
-export const normalizadorDelCarrito = (productsResponse, pricesResponse) => {
-    console.log('Inicializar el carrito con ', productsResponse, pricesResponse);
+export const normalizadorDelCarrito = (productsResponse, pricesResponse, stockResponse) => {
     // En el nuevo arreglo, cada objeto debe contener las propiedades del objeto 
     // correspondiente de productsResponse y además las propiedades price 
     // (del objeto correspondiente de pricesResponse) y stock (inicialmente 0).

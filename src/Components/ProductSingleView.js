@@ -1,8 +1,10 @@
 'use client'
 import { ProductsContext } from "@/productsController";
 import { useContext, useEffect, useState } from "react";
+import { IsLoading } from "./isLoading";
 
 export const ProductSingleView = ({ code }) => {
+
     const { productsState, isLoading } = useContext(ProductsContext);
     const [productData, setProductData] = useState();
     const [sizeData, setSizeData] = useState({});
@@ -32,27 +34,30 @@ export const ProductSingleView = ({ code }) => {
                 price: newProductData.prices.lPrice,
             });
         } else {
-            console.log('Error, no se encontró la disponibilidad del producto');
+            console.error('Error: no se encontró la disponibilidad del producto');
         }
+
         // Actualiza product data
         setProductData(newProductData);
     }, [productsState]);
 
     return (
-        <div>
-            {isLoading ? <div>Is loading...</div>
+        <div className="w-full flex flex-wrap justify-center">
+
+            {isLoading ? <IsLoading />
                 :
                 <>
-                    {productData && sizeData ?
+                    {productData && sizeData &&
                         <>
-                            <img className="w-12" src={productData.urlImg} alt={'Image from ' + productData.model} />
-                            <span>{productData.model}_</span>
-                            <RenderBySizeSelected productData={productData}
-                                sizeData={sizeData}
-                                setSizeData={setSizeData} />
+                            <img className="w-64 h-auto shadow-lg" src={productData.urlImg} alt={'Image from ' + productData.model} />
+                            <div className="w-64 p-2">
+                                <h3 className="font-bold">{productData.model}</h3>
+                                <RenderBySizeSelected
+                                    productData={productData}
+                                    sizeData={sizeData}
+                                    setSizeData={setSizeData} />
+                            </div>
                         </>
-                        :
-                        <div>No se encontró disponibilidad del producto</div>
                     }
                 </>
             }
@@ -63,7 +68,7 @@ export const ProductSingleView = ({ code }) => {
 const RenderBySizeSelected = ({ productData, sizeData, setSizeData }) => {
     return (
         <div>
-            $ {sizeData.price}
+            <div>$ {sizeData.price}</div>
             <Contador productData={productData} sizeData={sizeData} setSizeData={setSizeData} />
         </div>
     )
@@ -72,7 +77,9 @@ const RenderBySizeSelected = ({ productData, sizeData, setSizeData }) => {
 // Estos son micro components
 const Contador = ({ productData, sizeData, setSizeData }) => {
     const { modificarCarrito } = useContext(ProductsContext);
-    const [cantidad, setCantidad] = useState(1); // queremos que el usuario quiera comprar un producto, por eso inicio en 1.
+
+    // queremos que el usuario quiera comprar un producto, por eso inicio en 1.
+    const [cantidad, setCantidad] = useState(1);
     const handleRestar = () => {
         if (cantidad > 1) {
             setCantidad(cantidad - 1);
@@ -93,7 +100,7 @@ const Contador = ({ productData, sizeData, setSizeData }) => {
         setCantidad(1);
     }
     return (
-        <div>
+        <div className="mt-2 mb-2">
             {
                 // con que haya alguna
                 (productData.stocks.lStock || productData.stocks.mStock || productData.stocks.sStock) ?
@@ -102,24 +109,33 @@ const Contador = ({ productData, sizeData, setSizeData }) => {
                             <span>Size: </span>
                             <SelectorDeSize productData={productData} sizeData={sizeData} setSizeData={setSizeData} />
                         </div>
-
-                        <button onClick={handleRestar}>-</button>
-                        {cantidad}
-                        <button onClick={handleSumar}>+</button>
-                        <button onClick={handleAddToCart}>Add to cart</button>
+                        <div className="flex items-center mt-2 mb-2">
+                            <span>Qty: </span>
+                            <div className="ml-4 quantitySelector">
+                                <button className="p-2 border-solid border-2" onClick={handleRestar}>-</button>
+                                <span className="p-2">{cantidad}</span>
+                                <button className="p-2 border-solid border-2" onClick={handleSumar}>+</button>
+                            </div>
+                        </div>
+                        <div className="w-full flex justify-center">
+                            <button
+                                className="mt-2 mb-2 font-semibold rounded p-2 bg-blue-500 text-white hover:bg-blue-600"
+                                onClick={handleAddToCart}>
+                                Add to cart
+                            </button>
+                        </div>
                     </>
                     :
-                    // No quiero que arroje 0 al agotarse existencias
-                    <p>
-                        Ya no hay en existencia
-                    </p>
+                    <p>Ya no hay items en existencia</p>
+                // No es un error
+                // <IsError errorInfo={'Ya no hay en existencia'} />
             }
         </div>
     )
 }
 const SelectorDeSize = ({ productData, sizeData, setSizeData }) => { // no considero que sea necesario un global state para setSizeSelected
     const handleSizeChange = (size) => {
-        // Mejor este método lo puedo pasar hasta arriba
+        // Es posible refactorizar este método
         // Actualiza sizeData
         switch (size) {
             case 'S':
@@ -147,11 +163,31 @@ const SelectorDeSize = ({ productData, sizeData, setSizeData }) => { // no consi
                 break;
         }
     }
+
+    // Tailwind css es de por sí muy dificil de leer
     return (
         <>
-            {productData.stocks.sStock > 0 && <button className={`${sizeData.size === 'S' && 'border-2 border-solid'}`} onClick={() => handleSizeChange('S')}>S</button>}
-            {productData.stocks.mStock > 0 && <button className={`${sizeData.size === 'M' && 'border-2 border-solid'}`} onClick={() => handleSizeChange('M')}>M</button>}
-            {productData.stocks.lStock > 0 && <button className={`${sizeData.size === 'L' && 'border-2 border-solid'}`} onClick={() => handleSizeChange('L')}>L</button>}
+            {productData.stocks.sStock > 0 &&
+                <button
+                    className={`p-2 m-2 ${sizeData.size === 'S' && 'border-2 border-solid'}`}
+                    onClick={() => handleSizeChange('S')}>
+                    S
+                </button>
+            }
+            {productData.stocks.mStock > 0 &&
+                <button
+                    className={`p-2 m-2 ${sizeData.size === 'M' && 'border-2 border-solid'}`}
+                    onClick={() => handleSizeChange('M')}>
+                    M
+                </button>
+            }
+            {productData.stocks.lStock > 0 &&
+                <button
+                    className={`p-2 m-2 ${sizeData.size === 'L' && 'border-2 border-solid'}`}
+                    onClick={() => handleSizeChange('L')}>
+                    L
+                </button>
+            }
 
         </>
     )

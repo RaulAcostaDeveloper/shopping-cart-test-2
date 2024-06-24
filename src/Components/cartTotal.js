@@ -16,18 +16,19 @@ export const CartTotal = () => {
 
     const handleCheckout = () => {
         // Supongo que el comportamiento que se espera es limpiar el carrito y regresar a index
-        console.log('Limpiando el carrito ');
         cartState.forEach(element => {
             modificarCarrito(element.code, element.size, 0, "elimina");
         });
     }
     return (
-        <div className="border-solid border">
-            <h3>Order Summary</h3>
+        <div className="w-64 shadow-lg bg-gray-100">
+            <h3 className="font-bold">Order Summary</h3>
             <span>Subtotal: $ {total}</span>
-            <Link href={'/'} onClick={handleCheckout}>
-                <button>Checkout</button>
-            </Link>
+            <div className="w-full flex justify-center mt-4 mb-4">
+                <Link href={'/'} onClick={handleCheckout}>
+                    <button className="mt-2 mb-2 font-semibold rounded p-2 bg-blue-500 text-white hover:bg-blue-600">Checkout</button>
+                </Link>
+            </div>
         </div>
     )
 }

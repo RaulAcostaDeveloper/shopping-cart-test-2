@@ -2,7 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-button {
-  border: 1px solid black;
-  padding: 5px;
+/* Esta única clase la añadí porque con tailwind css se pasaba un pizel este elemento referente a los botones de size */
+.quantitySelector {
+    position: relative;
+    left: 2px;
 }

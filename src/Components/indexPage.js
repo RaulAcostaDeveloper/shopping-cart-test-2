@@ -2,28 +2,42 @@
 import { ProductsContext } from "@/productsController";
 import Link from "next/link";
 import { useContext, useState } from "react"
+import { IsLoading } from "./isLoading";
+import { IsError } from "./isError";
 
 export const IndexPage = () => {
-    const { productsState, isLoading, isError } = useContext(ProductsContext);
+
+    const { productsState, isLoading } = useContext(ProductsContext);
+
     return (
-        <div>
-            {isLoading && <div> Is loading...</div>}
-            {isError && <div>Error!</div>}
+        <div className="flex justify-around flex-wrap items-end">
+
+            {isLoading && <IsLoading />}
+
             {productsState.map((product, index) => (
-                <div key={index}>
+                <div  key={index} >
+
                     {/* Cubrir el caso en el que no haya stock de ningun size */}
-                    {(product.stocks.lStock || product.stocks.mStock || product.stocks.sStock) &&
-                        <div>
+                    {(product.stocks.lStock || product.stocks.mStock || product.stocks.sStock) ?
+                        <div className="w-32 m-4 shadow-lg flex flex-wrap items-end">
                             {/* Podría añadir un botón para ir a su single view pero no se si quieren que respete al 100% el diseño */}
                             {/* Por esa razón pongo el click en la imágen y el título */}
-                            <Link href={'/' + product.code}>
-                                <img className="w-12" src={product.urlImg} alt={'img of ' + product.model} />
-                                <h3>{product.model}</h3>
+                            <Link className="pointer" href={'/' + product.code} title="Click para ir al single view">
+
+                                {/* Un problema con NEXT y Tailwind es que next pide que usemos Image en lugar de img */}
+                                {/* Y NEXT no permite urls de imágenes de localhost */}
+                                {/* Y la url de la imágen viene de localhost */}
+                                <img className="w-full" src={product.urlImg} alt={'img of ' + product.model} />
+                                <h3 className="font-bold text-center">{product.model}</h3>
                             </Link>
+
                             {/* Aquí decide cuál se va a renderizar */}
                             {/* Por disponibilidad priorizando por tamaño !Importante información para entender todo el comportamiento*/}
                             <ProductInfoSelector product={product} />
                         </div>
+                        :
+                        // Usaba && pero arrojaba 0 en lugar de null
+                        <></>
                     }
                 </div>
             ))}
@@ -31,34 +45,38 @@ export const IndexPage = () => {
     )
 }
 
-const ProductInfoSelector = ({ product }) => (
-    <div>
-        {product.stocks.sStock > 0 ?
-            <ProductInfo code={product.code} price={product.prices.sPrice} size={'S'} />
-            :
-            <>
-                {product.stocks.mStock > 0 ?
-                    <ProductInfo code={product.code} price={product.prices.mPrice} size={'M'} />
-                    :
-                    <>
-                        {product.stocks.mStock > 0 ?
-                            <ProductInfo code={product.code} price={product.prices.lPrice} size={'L'} />
-                            :
-                            <div>Error inesperado: No hay items in stock</div>
-                        }
-                    </>
-                }
-            </>
-        }
+const ProductInfoSelector = ({ product }) => {
+    return (
+        <div className="flex flex-wrap items-end justify-center">
+            {product.stocks.sStock > 0 ?
+                <ProductInfo code={product.code} price={product.prices.sPrice} size={'S'} />
+                :
+                <>
+                    {product.stocks.mStock > 0 ?
+                        <ProductInfo code={product.code} price={product.prices.mPrice} size={'M'} />
+                        :
+                        <>
+                            {product.stocks.lStock > 0 ?
+                                <ProductInfo code={product.code} price={product.prices.lPrice} size={'L'} />
+                                :
+                                <IsError errorInfo={'Error inesperado: No hay items in stock'} />
+                            }
+                        </>
+                    }
+                </>
+            }
 
-    </div>
-);
+        </div>
+    )
+};
 
 const ProductInfo = ({ code, price, size }) => {
+
     const [isDissabled, setIsDissabled] = useState(false);
     const { modificarCarrito } = useContext(ProductsContext);
 
     const handleAddToCart = () => {
+
         // Se va a añadir un solo elemento de este tipo al carrito
         modificarCarrito(code, size, 1, 'suma');
 
@@ -68,10 +86,16 @@ const ProductInfo = ({ code, price, size }) => {
         setIsDissabled(true);
     }
     return (
-        <div>
-            $ {price}
-            {/* Recordar mostrarlo como deshabilitado una vez añadido */}
-            <button onClick={handleAddToCart} disabled={isDissabled}>Add to cart</button>
-        </div>
+        <>
+            <span>$ {price}</span>
+
+            {/* Mostrarlo como deshabilitado una vez añadido */}
+            <button className={`mt-2 mb-2 font-semibold rounded p-2
+                ${isDissabled
+                    ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
+                onClick={handleAddToCart} disabled={isDissabled}>Add to cart</button>
+        </>
     )
 }

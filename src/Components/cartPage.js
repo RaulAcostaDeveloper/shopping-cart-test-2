@@ -7,19 +7,23 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { ProductsContext } from "@/productsController";
 import { CartTotal } from './cartTotal';
+import Link from 'next/link';
 
 export const CartPage = () => {
     const { cartState } = useContext(ProductsContext);
     return (
-        <div>
-            {cartState.map((el, index) => (
-                <div key={index}>
-                    {/* Lo estoy haciendo tal cuál lo pide los requerimientos, pero no me parece que sea el funcionamiento correcto */}
-                    {el.stock > 0 &&
-                        <CartItem key={index} cartData={el} />
-                    }
-                </div>
-            ))}
+        <div className='w-full flex justify-around flex-wrap'>
+            <div className='w-64 mh-full bg-gray-100'>
+                <h2 className='font-extrabold'>Orders</h2>
+                {cartState.map((el, index) => (
+                    <div key={index} >
+                        {/* Lo estoy haciendo tal cuál lo pide los requerimientos, pero no me parece que sea el funcionamiento correcto */}
+                        {el.stock > 0 &&
+                            <CartItem key={index} cartData={el} />
+                        }
+                    </div>
+                ))}
+            </div>
             <CartTotal/>
         </div>
     )
@@ -60,14 +64,18 @@ const CartItem = ({ cartData }) => {
     return (
         <>
             {maxDisponible > 0 &&
-                <div className='w-64 border-solid border-2'>
-                    <img className='w-12' src={url} alt={'Imagen de ' + cartData.model}/>
-                    <div>{cartData.model}</div>
-                    <div>Large: {cartData.size}</div>
-                    <div>$ {cartData.price}</div>
+                <div className='w-full relative flex justify-between shadow-md mt-4 mb-4'>
+                    <Link className='flex' href={'/' + cartData.code}>
+                        <img className='w-20' src={url} alt={'Imagen de ' + cartData.model}/>
+                        <div className='w-24'>
+                            <h3 className='font-bold'>{cartData.model}</h3>
+                            <div>Large: {cartData.size}</div>
+                            <div>$ {cartData.price}</div>
+                        </div>
+                    </Link>
                     <SelectorDeCantidad cartData = {cartData} maxDisponible={maxDisponible} modificarCarrito={modificarCarrito}/>
                     {/* Borrar item del carrito */}
-                    <button onClick={handleDelete}>X</button>
+                    <button className='absolute top-0 right-0 p-1 bg-gray-200 cursor-pointer' onClick={handleDelete}>X</button>
                 </div>
             }
         </>
@@ -98,8 +106,8 @@ const SelectorDeCantidad = ({ cartData, maxDisponible, modificarCarrito }) => {
     // Lo cuál no refleja cómo debe trabajar un equipo eficiente y organizado, capaz de tomar decisiones durante la iteración del sprint
 
     return (
-        <div>
-            <select value={quantitySelected} onChange={(e)=>handleSelectNewQuantity(e.target.value)}>
+        <div className='mr-8'>
+            <select className='border-solid border-2 cursor-pointer' value={quantitySelected} onChange={(e)=>handleSelectNewQuantity(e.target.value)}>
                 {options.map((option) => (
                     <option key={option} value={option}>
                         {option}

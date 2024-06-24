@@ -56,9 +56,17 @@ Una vez que el proyecto esté en ejecución, puedes acceder a la aplicación en 
 
 Página Principal: Listado de productos.
 
+http://localhost:3001
+
+
 Página de Productos por Código: Información detallada de un producto específico.
 
+http://localhost:3001/[code]
+
+
 Página del Carrito de Compras: Visualización y gestión de los productos añadidos al carrito.
+
+http://localhost:3001/cartPage
 
 
 ## Autores
